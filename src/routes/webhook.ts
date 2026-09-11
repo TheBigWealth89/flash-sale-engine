@@ -1,16 +1,21 @@
-import express, { Router } from "express";
+import express, { Router, Request, Response } from "express";
 import { verifyStripeWebhook } from "../middleware/verifyWebhookSignature.js";
 import logger from "../utils/logger.js";
 import purchaseQueue from "../queues/purchaseQueue.js";
 import { pool, redisClient } from "../db/connections.js";
 import { redisKey } from "../utils/redisKeys.js";
+
 const router = Router();
+
+export interface WebhookRequest extends Request {
+  stripeEvent?: any;
+}
 
 router.post(
   "/webhook-stripe",
   express.raw({ type: "application/json" }),
   verifyStripeWebhook,
-  async (req, res) => {
+  async (req: WebhookRequest, res: Response) => {
     const event = req.stripeEvent;
     const paymentIntent = event.data.object;
     const orderIds = paymentIntent.metadata.order_ids.split(",");

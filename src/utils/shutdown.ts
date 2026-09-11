@@ -9,13 +9,10 @@ const SHUTDOWN_TIMEOUT_MS = 25_000; // Force-exit before Docker's 30s SIGKILL
  * @param {string}                          opts.name
  * @param {import("http").Server}           [opts.httpServer]
  * @param {import("socket.io").Server}      [opts.io]          - Must be closed BEFORE httpServer
- * @param {import("bullmq").Worker}         [opts.worker]      - Drained with a 20s timeout
- * @param {import("bullmq").Queue}          [opts.queue]
- * @param {import("pg").Pool}               [opts.dbPool]
- * @param {import("ioredis").Redis}         [opts.redisClient]
- * @param {() => void | Promise<void>}      [opts.stopTimer]   - Cancel interval/cron; may be async
+ * @param {ShutdownOptions} opts
+ * @param {string} signal
  */
-export async function gracefulShutdown(opts) {
+export async function performShutdown(opts: ShutdownOptions, signal: string) {
   const { name, httpServer, io, worker, queue, dbPool, redisClient, stopTimer } =
     opts;
 
@@ -34,7 +31,7 @@ export async function gracefulShutdown(opts) {
     // 3. Stop accepting new HTTP connections
     if (httpServer) {
       await new Promise((res, rej) =>
-        httpServer.close((err) => {
+        httpServer.close((err: any) => {
           if (err && err.code !== "ERR_SERVER_NOT_RUNNING" && err.message !== "Server is not running.") {
             return rej(err);
           }
@@ -97,7 +94,7 @@ export async function gracefulShutdown(opts) {
 
     logger.info(`[${name}] Graceful shutdown complete ✅`);
     process.exit(0);
-  } catch (err) {
+  } catch (err: any) {
     logger.error(`[${name}] Shutdown error — forcing exit`, {
       error: err.message,
     });
@@ -111,7 +108,16 @@ export async function gracefulShutdown(opts) {
  *
  * @param {Parameters<typeof gracefulShutdown>[0]} opts
  */
-export function registerShutdownHandlers(opts) {
+interface ShutdownOptions {
+  name: string;
+  httpServer?: any;
+  io?: any;
+  dbPool?: any;
+  redisClient?: any;
+  worker?: any;
+}
+
+export function registerShutdownHandlers(opts: ShutdownOptions) {
   let isShuttingDown = false;
 
   const handler = (signal) => {

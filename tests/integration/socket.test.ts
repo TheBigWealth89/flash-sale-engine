@@ -69,6 +69,10 @@ describe("Socket.IO Real-Time Inventory Broadcast", () => {
       productId: productId,
       newInventory: newInventory,
     });
+    
+    // Wait for the subscriber in initSockets to finish subscribing
+    await new Promise((r) => setTimeout(r, 100));
+
     await redis.publish("inventory-updates", updateMessage);
 
     // Wait briefly for Redis subscriber message callback

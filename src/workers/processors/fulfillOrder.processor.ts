@@ -1,11 +1,12 @@
 import { pool } from "../../db/connections.js";
+import { Job } from "bullmq";
 import logger from "../../utils/logger.js";
 
 /**
  * Core fulfillment logic extracted from fulfillOrderWorker.
  * Accepts a BullMQ-shaped job object: { data: { orderId } }
  */
-export async function fulfillOrderProcessor(job) {
+export async function fulfillOrderProcessor(job: Job) {
   // Validate job data
   if (!job.data || !job.data.orderId) {
     logger.error(
@@ -55,7 +56,7 @@ export async function fulfillOrderProcessor(job) {
 
     await client.query("COMMIT");
     logger.info(`✅ Order ${orderId} fulfilled successfully.`);
-  } catch (e) {
+  } catch (e: any) {
     if (client) {
       await client.query("ROLLBACK");
     }

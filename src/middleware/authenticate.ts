@@ -1,6 +1,11 @@
 import jwt from "jsonwebtoken";
+import { Request, Response, NextFunction } from "express";
 
-export function authenticate(req, res, next) {
+export interface AuthRequest extends Request {
+  user?: { id: string; role: string };
+}
+
+export function authenticate(req: AuthRequest, res: Response, next: NextFunction) {
   let token = req.cookies?.token;
 
   if (!token && req.headers.authorization?.startsWith("Bearer ")) {
@@ -15,7 +20,7 @@ export function authenticate(req, res, next) {
   }
 
   try {
-    const payload = jwt.verify(token, process.env.JWT_SECRET);
+    const payload = jwt.verify(token, process.env.JWT_SECRET as string) as { sub: string, role: string };
     req.user = { id: payload.sub, role: payload.role };
     next();
   } catch (err) {
@@ -27,8 +32,8 @@ export function authenticate(req, res, next) {
   }
 }
 
-export function requireRole(role) {
-  return function (req, res, next) {
+export function requireRole(role: string) {
+  return function (req: AuthRequest, res: Response, next: NextFunction) {
     if (req.user && req.user.role === role) {
       next();
     } else {

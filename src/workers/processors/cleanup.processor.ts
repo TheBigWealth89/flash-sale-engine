@@ -1,4 +1,5 @@
 import { pool } from "../../db/connections.js";
+import { Job } from "bullmq";
 import { returnStock } from "../../service/inventory.service.js";
 import logger from "../../utils/logger.js";
 
@@ -6,7 +7,7 @@ import logger from "../../utils/logger.js";
  * Core cleanup logic extracted from cleanupWorker.
  * Processes a single failed BullMQ job: cancels the order and returns stock.
  */
-export async function cleanupProcessor(job) {
+export async function cleanupProcessor(job: Job) {
   let client;
   try {
     client = await pool.connect();
@@ -40,7 +41,7 @@ export async function cleanupProcessor(job) {
       await job.remove();
     }
     logger.info(`✅ Successfully cleaned job ${job.id}`);
-  } catch (err) {
+  } catch (err: any) {
     if (client) await client.query("ROLLBACK");
     logger.error(`❌ Failed to clean job ${job.id}:`, err);
   } finally {

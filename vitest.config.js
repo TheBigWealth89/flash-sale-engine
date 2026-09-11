@@ -7,7 +7,7 @@ export default defineConfig({
     pool: 'forks',
     testTimeout: 15000,
     hookTimeout: 15000,
-    include: ['tests/**/*.test.js'],
+    include: ['tests/**/*.test.ts', 'tests/**/*.test.js'],
     globalSetup: ['./tests/setup/globalSetup.js'],
     coverage: {
       provider: 'v8',

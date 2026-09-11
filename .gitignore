@@ -1,8 +1,9 @@
 .env
 .env.local
 .env.test
-node_modules
-logs
+node_modules/
+logs/
 clear-system.js
 inspect-redis.js
-scratch
+scratch/
+dist/

@@ -37,7 +37,7 @@ const redactSecrets = winston.format((info) => {
     info.message = info.message.replace(REDIS_URL_REGEX, '$1[REDIS_PASSWORD_REDACTED]$3');
   }
 
-  const scrubObject = (obj) => {
+  const scrubObject = (obj: any) => {
     if (!obj || typeof obj !== 'object') return;
     for (let key in obj) {
       if (SENSITIVE_KEYS.some(k => key.toLowerCase().includes(k))) {
@@ -71,7 +71,7 @@ const fileFormat = winston.format.combine(
   winston.format.json()
 );
 
-const transports = [
+const transports: winston.transport[] = [
   new winston.transports.File({
     filename: `${logDir}/error.log`,
     level: "error",

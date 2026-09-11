@@ -1,15 +1,15 @@
-import express from "express";
+import { Router, Request, Response } from "express";
 import { pool, redisClient } from "../db/connections.js";
 import purchaseQueue from "../queues/purchaseQueue.js";
 import logger from "../utils/logger.js";
 import { authenticate, requireRole } from "../middleware/authenticate.js";
 
-const healthRouter = express.Router();
+const healthRouter = Router();
 
 logger.info('Health routes initialised (/health, /ready, /metrics)');
 
 // Liveness probe
-healthRouter.get("/health", (req, res) => {
+healthRouter.get("/health", (req: Request, res: Response) => {
   res.status(200).json({
     status: "ok",
     process: "api-server",
@@ -19,13 +19,13 @@ healthRouter.get("/health", (req, res) => {
 });
 
 // Readiness probe
-healthRouter.get("/ready", async (req, res) => {
+healthRouter.get("/ready", async (req: Request, res: Response) => {
   const pgCheck = async () => {
     const start = Date.now();
     try {
       await pool.query('SELECT 1');
       return { dependency: "postgres", status: "ok", latency_ms: Date.now() - start };
-    } catch (err) {
+    } catch (err: any) {
       return { dependency: "postgres", status: "error", latency_ms: Date.now() - start, error: err.message };
     }
   };
@@ -38,7 +38,7 @@ healthRouter.get("/ready", async (req, res) => {
         throw new Error(`Unexpected Redis ping response: ${result}`);
       }
       return { dependency: "redis", status: "ok", latency_ms: Date.now() - start };
-    } catch (err) {
+    } catch (err: any) {
       return { dependency: "redis", status: "error", latency_ms: Date.now() - start, error: err.message };
     }
   };
@@ -48,7 +48,7 @@ healthRouter.get("/ready", async (req, res) => {
     try {
       const counts = await purchaseQueue.getJobCounts();
       return { dependency: "bullmq", status: "ok", latency_ms: Date.now() - start, job_counts: counts };
-    } catch (err) {
+    } catch (err: any) {
       return { dependency: "bullmq", status: "error", latency_ms: Date.now() - start, error: err.message };
     }
   };
@@ -68,12 +68,12 @@ healthRouter.get("/ready", async (req, res) => {
     ])
   ]);
 
-  const checks = {};
+  const checks: any = {};
   let isDegraded = false;
 
   for (const result of results) {
     // Because we handle errors internally, result.status should always be 'fulfilled'
-    const data = result.value;
+    const data = (result as PromiseFulfilledResult<any>).value;
     const { dependency, ...details } = data;
     checks[dependency] = details;
     if (details.status === "error") {
@@ -98,7 +98,7 @@ healthRouter.get("/ready", async (req, res) => {
 });
 
 // Metrics endpoint
-healthRouter.get("/metrics", authenticate, requireRole('admin'), async (req, res) => {
+healthRouter.get("/metrics", authenticate, requireRole('admin'), async (req: Request, res: Response) => {
   const fetchQueueCounts = async () => {
     try {
       return await purchaseQueue.getJobCounts();
@@ -113,11 +113,11 @@ healthRouter.get("/metrics", authenticate, requireRole('admin'), async (req, res
       const keys = await redisClient.keys('inventory:product-*');
       if (keys.length === 0) return {};
       const values = await redisClient.mget(...keys);
-      const inventory = {};
+      const inventory: any = {};
       keys.forEach((key, index) => {
         if (values[index] !== null) {
           const productId = key.replace('inventory:product-', '');
-          inventory[`product_${productId}`] = parseInt(values[index], 10);
+          inventory[`product_${productId}`] = parseInt(values[index] as string, 10);
         }
       });
       return inventory;

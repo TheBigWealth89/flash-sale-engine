@@ -1,4 +1,5 @@
-import express from "express";
+import express, { Response } from "express";
+import { AuthRequest } from "../middleware/authenticate.js";
 import purchaseQueue from "../queues/purchaseQueue.js";
 import { pool } from "../db/connections.js";
 import inventoryService from "../service/inventory.service.js";
@@ -8,9 +9,9 @@ const router = express.Router();
 
 
 // Dashboard route with pagination
-router.get("/dashboard", async (req, res) => {
+router.get("/dashboard", async (req: AuthRequest, res: Response) => {
   try {
-    const page = parseInt(req.query.page) || 1;
+    const page = parseInt(req.query.page as string, 10) || 1;
     const pageSize = 10;
     const startIdx = (page - 1) * pageSize;
 
@@ -37,7 +38,7 @@ router.get("/dashboard", async (req, res) => {
 });
 
 // Update Inventory
-router.post("/products/:id/inventory", async (req, res) => {
+router.post("/products/:id/inventory", async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
     const { inventory } = req.body;
@@ -54,13 +55,13 @@ router.post("/products/:id/inventory", async (req, res) => {
     logger.error(`Failed to update product ${id} inventory:`, err);
     res.status(500).json({
       error: "Failed to update inventory",
-      details: process.env.NODE_ENV === "development" ? err.message : null,
+      details: process.env.NODE_ENV === "development" && err instanceof Error ? err.message : null,
     });
   }
 });
 
 // Retry job
-router.post("/jobs/:jobId/retry", async (req, res) => {
+router.post("/jobs/:jobId/retry", async (req: AuthRequest, res: Response) => {
   try {
 
     const { jobId } = req.params;
@@ -79,13 +80,13 @@ router.post("/jobs/:jobId/retry", async (req, res) => {
     logger.error(`Failed to retry job ${jobId}:`, err);
     res.status(500).json({
       error: "Failed to retry job",
-      details: process.env.NODE_ENV === "development" ? err.message : null,
+      details: process.env.NODE_ENV === "development" && err instanceof Error ? err.message : null,
     });
   }
 });
 
 // Cancel job
-router.post("/jobs/:jobId/cancel", async (req, res) => {
+router.post("/jobs/:jobId/cancel", async (req: AuthRequest, res: Response) => {
   const { jobId } = req.params;
   let client;
   try {
@@ -147,7 +148,7 @@ router.post("/jobs/:jobId/cancel", async (req, res) => {
     logger.error(`Failed to cancel job ${jobId}:`, err);
     res.status(500).json({
       error: "Failed to cancel job",
-      details: process.env.NODE_ENV === "development" ? err.message : null,
+      details: process.env.NODE_ENV === "development" && err instanceof Error ? err.message : null,
     });
   } finally {
     if (client) client.release();
