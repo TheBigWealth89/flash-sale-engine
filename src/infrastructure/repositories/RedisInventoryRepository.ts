@@ -1,4 +1,4 @@
-import Redis from 'ioredis';
+import { Redis } from 'ioredis';
 import { IInventoryRepository } from '../../domain/interfaces/IInventoryRepository.js';
 import { redisKey } from '../../utils/redisKeys.js';
 import fs from 'fs';

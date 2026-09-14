@@ -114,7 +114,7 @@ healthRouter.get("/metrics", authenticate, requireRole('admin'), async (req: Req
       if (keys.length === 0) return {};
       const values = await redisClient.mget(...keys);
       const inventory: any = {};
-      keys.forEach((key, index) => {
+      keys.forEach((key: string, index: number) => {
         if (values[index] !== null) {
           const productId = key.replace('inventory:product-', '');
           inventory[`product_${productId}`] = parseInt(values[index] as string, 10);
@@ -130,7 +130,7 @@ healthRouter.get("/metrics", authenticate, requireRole('admin'), async (req: Req
     try {
       const info = await redisClient.info('memory');
       const lines = info.split('\n');
-      const usedMemoryLine = lines.find(line => line.startsWith('used_memory:'));
+      const usedMemoryLine = lines.find((line: string) => line.startsWith('used_memory:'));
       if (usedMemoryLine) {
         const bytes = parseInt(usedMemoryLine.split(':')[1], 10);
         return parseFloat((bytes / 1048576).toFixed(2));
@@ -160,9 +160,9 @@ healthRouter.get("/metrics", authenticate, requireRole('admin'), async (req: Req
       },
       node_version: process.version
     },
-    queue: queueCounts.value || null,
-    inventory: inventory.value || null,
-    redis_memory_mb: redisMemory.value || null
+    queue: queueCounts.status === 'fulfilled' ? queueCounts.value : null,
+    inventory: inventory.status === 'fulfilled' ? inventory.value : null,
+    redis_memory_mb: redisMemory.status === 'fulfilled' ? redisMemory.value : null
   });
 });
 

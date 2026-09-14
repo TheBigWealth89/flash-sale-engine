@@ -3,7 +3,7 @@ import { IOrderRepository } from '../../domain/interfaces/IOrderRepository.js';
 import { ICartRepository } from '../../domain/interfaces/ICartRepository.js';
 import logger from '../../utils/logger.js';
 import stripe from '../../config/stripe.js';
-import { Pool } from 'pg'; // For transactions since repository boundaries might not span transactions natively without a Unit of Work pattern
+import { Pool, PoolClient } from 'pg'; // For transactions since repository boundaries might not span transactions natively without a Unit of Work pattern
 
 export class CheckoutService {
   constructor(
@@ -53,8 +53,8 @@ export class CheckoutService {
 
   async createPaymentIntent(userId: string) {
     logger.info('Creating payment intent...');
-    let client = null;
-    let compensationClient = null;
+    let client: PoolClient | null = null;
+    let compensationClient: PoolClient | null = null;
     let successfulItems: string[] = [];
 
     try {
@@ -139,7 +139,8 @@ export class CheckoutService {
       throw new Error('Failed to process payment.');
     } finally {
       if (client) client.release();
-      if (compensationClient) compensationClient.release();
+      const compClient = compensationClient as PoolClient | null;
+      if (compClient) compClient.release();
     }
   }
 }
