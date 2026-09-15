@@ -2,7 +2,7 @@ import { redisClient, pool } from "../db/connections.js";
 import { syncInventoryToRedis } from "../db/sync-inventory.js";
 import logger from "../utils/logger.js";
 
-export const returnStock = async (productId) => {
+export const returnStock = async (productId: string | number) => {
   const inventoryKey = `inventory:product-${productId}`;
 
   // Atomically increase the inventory in Redis
@@ -27,7 +27,7 @@ export const returnStock = async (productId) => {
  * Updates a product's inventory in the database and immediately synchronizes Redis.
  * This should be used whenever inventory is changed manually by an admin.
  */
-export const updateProductInventory = async (productId, newCount) => {
+export const updateProductInventory = async (productId: string | number, newCount: number) => {
   try {
     // 1. Update PostgreSQL
     await pool.query("UPDATE products SET inventory = $1 WHERE id = $2", [

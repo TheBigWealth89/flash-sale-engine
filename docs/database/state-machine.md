@@ -44,7 +44,7 @@ The following transitions are not implemented and must not occur.
 | `expired` | any other status | An expired reservation has already had its Redis inventory restored. Re-activating it would double-count that inventory. |
 | `cancelled` | any other status | Cancelled orders are terminal. The stock has been returned and the BullMQ job removed. There is nothing to re-activate. |
 | `reserved` | `completed` | Completion requires a confirmed Stripe payment and a BullMQ job. Direct transition skips both and would leave a payment debt with no Stripe record. |
-| `payment_pending` | `reserved` | This transition is only made by the compensation logic in `products.js` when Stripe PaymentIntent *creation* fails — not after it succeeds. Once a PaymentIntent exists in Stripe, the order must either complete or be cancelled; it cannot go back to reserved. |
+| `payment_pending` | `reserved` | This transition is only made by the compensation logic in `products.ts` when Stripe PaymentIntent *creation* fails — not after it succeeds. Once a PaymentIntent exists in Stripe, the order must either complete or be cancelled; it cannot go back to reserved. |
 | `payment_pending` | `expired` | The `expiresWorker` intentionally ignores rows with `status = 'payment_pending'`. Expiring an order mid-payment would return stock and invalidate a live Stripe charge. |
 
 ---
@@ -63,7 +63,7 @@ Each status has a defined meaning for inventory across both Redis and PostgreSQL
 
 ### Reconciliation
 
-At startup, `sync-inventory.js` reconciles Redis with PostgreSQL using this formula:
+At startup, `sync-inventory.ts` reconciles Redis with PostgreSQL using this formula:
 
 ```
 available = product.inventory

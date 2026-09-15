@@ -5,6 +5,11 @@ import { registerShutdownHandlers } from "../utils/shutdown.js";
 import { expiryProcessor } from "./processors/expiry.processor.js";
 
 class ExpirationCleanup {
+  public isRunning: boolean;
+  public interval: number;
+  public timer: NodeJS.Timeout | null;
+  public _runningPromise: Promise<void>;
+
   constructor() {
     this.isRunning = false;
     this.interval = 30000; // 30 seconds
@@ -35,7 +40,7 @@ class ExpirationCleanup {
   }
 
   async stop() {
-    clearInterval(this.timer); // stop future poll cycles
+    if (this.timer) clearInterval(this.timer); // stop future poll cycles
     await this._runningPromise; // wait for any in-flight run to finish
     logger.info("[Expires Worker] In-flight cleanup awaited");
   }

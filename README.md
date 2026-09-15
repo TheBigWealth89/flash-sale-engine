@@ -84,9 +84,3 @@ The API is available at `http://localhost:3000`. See [docs/development/setup.md]
 | [docs/testing/running-tests.md](docs/testing/running-tests.md) | How to run tests, all npm test scripts, priority ranking, CI integration |
 
 ---
-
-## Known Limitations
-
-> **Mock User Database**: `src/routes/auth.route.js` uses a hardcoded `MOCK_USERS` object for authentication. In production this must be replaced with a real database user table and a proper credential-hashing flow (e.g. bcrypt + a `users` table in PostgreSQL).
-
-> **Unused `pool` package**: The `pool` package (`^0.4.1`) appears in the dependency tree but serves no purpose — `pg` ships its own `Pool` class that is already in use throughout the codebase. The `pool` package can be safely removed with `npm uninstall pool`.

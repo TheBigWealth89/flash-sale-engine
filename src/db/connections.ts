@@ -8,7 +8,7 @@ export const pool = new Pool({
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
-  port: process.env.DB_PORT || 5432,
+  port: parseInt(process.env.DB_PORT || "5432"),
   ssl: process.env.DB_SSL === "true" ? { rejectUnauthorized: false } : false,
   max: process.env.NODE_ENV === "test" ? 2 : 10, // max number of clients in the pool
   min: 1, // minimum number of idle clients to maintain
@@ -18,7 +18,7 @@ export const pool = new Pool({
 // re
 // --- Redis Connection ---
 const redisUrl = process.env.REDIS_URL || "redis://localhost:6379";
-export const redisClient = new Redis(redisUrl, {
+export const redisClient = new (Redis as any)(redisUrl, {
   maxRetriesPerRequest: null,
   enableReadyCheck: false,
   rejectUnauthorized: true,
@@ -34,7 +34,7 @@ redisClient.on("connect", () =>
   logger.info(`Redis connecting......... ${redisUrl}`)
 );
 redisClient.on("ready", () => logger.info("Redis client ready"));
-redisClient.on("error", (err) => logger.error("Redis error:", err));
+redisClient.on("error", (err: Error) => logger.error("Redis error:", err));
 redisClient.on("end", () => logger.warn("Redis connection closed"));
 
 // --- Central Connect Function ---

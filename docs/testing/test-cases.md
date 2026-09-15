@@ -10,7 +10,7 @@ For test infrastructure and isolation patterns see [strategy.md](strategy.md). F
 
 ## Path A — Reservation (Happy Path & Inventory)
 
-**File**: `tests/integration/reservation.test.js`
+**File**: `tests/integration/reservation.test.ts`
 **Minimum cases**: 4
 
 **What it tests**: The core reservation flow — that a user can reserve a product and that the inventory counters in both Redis and PostgreSQL are updated correctly.
@@ -30,7 +30,7 @@ For test infrastructure and isolation patterns see [strategy.md](strategy.md). F
 
 ## Path B — Concurrency (Race Condition Prevention)
 
-**File**: `tests/integration/reservation.test.js` (within the same file as Path A)
+**File**: `tests/integration/reservation.test.ts` (within the same file as Path A)
 **Minimum cases**: 2
 
 **What it tests**: That the `decrement_inventory.lua` Lua script prevents overselling when multiple users reserve simultaneously.
@@ -71,7 +71,7 @@ expect(parseInt(inventory)).toBeGreaterThanOrEqual(0);
 
 ## Path C — Checkout and Payment Intent
 
-**File**: `tests/integration/checkout.test.js`
+**File**: `tests/integration/checkout.test.ts`
 **Minimum cases**: 3
 
 **What it tests**: Cart validation via `validate_cart.lua` and Stripe PaymentIntent creation, including the case where a reservation TTL has expired.
@@ -102,7 +102,7 @@ vi.mock("stripe", () => ({
 
 ## Path D — Webhook Fulfillment
 
-**File**: `tests/integration/webhook.test.js`
+**File**: `tests/integration/webhook.test.ts`
 **Minimum cases**: 4
 
 **What it tests**: The Stripe webhook endpoint — signature verification, identity validation, and BullMQ job enqueueing. This is the security boundary between Stripe and the backend.
@@ -136,7 +136,7 @@ expect(addSpy).toHaveBeenCalledTimes(2);
 
 ## Path E — Fulfill Order Worker (Idempotency)
 
-**File**: `tests/e2e/fulfillWorker.test.js`
+**File**: `tests/e2e/fulfillWorker.test.ts`
 **Minimum cases**: 3
 
 **What it tests**: The `fulfillOrderProcessor` function — that it correctly transitions an order to `completed`, decrements PostgreSQL inventory, and is fully idempotent on duplicate calls.
@@ -155,7 +155,7 @@ expect(addSpy).toHaveBeenCalledTimes(2);
 
 ## Path F — Expiry Worker
 
-**File**: `tests/e2e/expiresWorker.test.js`
+**File**: `tests/e2e/expiresWorker.test.ts`
 **Minimum cases**: 4
 
 **What it tests**: The `expiryProcessor` function — that it expires overdue `reserved` orders, restores Redis inventory, and leaves `payment_pending` orders untouched.
@@ -193,7 +193,7 @@ expect(result.rows[0].status).toBe("payment_pending");
 
 ## Path G — Authentication and RBAC
 
-**File**: `tests/integration/auth.test.js`
+**File**: `tests/integration/auth.test.ts`
 **Minimum cases**: 5
 
 **What it tests**: JWT issuance, cookie behaviour, and role-based access control enforcement on protected routes.
@@ -214,7 +214,7 @@ expect(result.rows[0].status).toBe("payment_pending");
 
 ## Path H — Rate Limiting
 
-**File**: `tests/integration/rateLimiter.test.js`
+**File**: `tests/integration/rateLimiter.test.ts`
 **Minimum cases**: 3
 
 **What it tests**: That the distributed Redis-backed rate limiter correctly enforces per-user request limits on the reservation endpoint.
@@ -233,7 +233,7 @@ expect(result.rows[0].status).toBe("payment_pending");
 
 ## Path I — Health Endpoints
 
-**File**: `tests/integration/health.test.js`
+**File**: `tests/integration/health.test.ts`
 **Minimum cases**: 4
 
 **What it tests**: The shape and correctness of the three observability endpoints.

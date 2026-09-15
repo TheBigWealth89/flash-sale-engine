@@ -24,13 +24,13 @@ export async function performShutdown(opts: ShutdownOptions, signal: string) {
 
     // 2. Close Socket.IO FIRST — disconnects WS clients so httpServer.close() can resolve
     if (io) {
-      await new Promise((res) => io.close(() => res()));
+      await new Promise<void>((res) => io.close(() => res()));
       logger.info(`[${name}] Socket.IO closed`);
     }
 
     // 3. Stop accepting new HTTP connections
     if (httpServer) {
-      await new Promise((res, rej) =>
+      await new Promise<void>((res, rej) =>
         httpServer.close((err: any) => {
           if (err && err.code !== "ERR_SERVER_NOT_RUNNING" && err.message !== "Server is not running.") {
             return rej(err);
@@ -115,12 +115,14 @@ interface ShutdownOptions {
   dbPool?: any;
   redisClient?: any;
   worker?: any;
+  queue?: any;
+  stopTimer?: () => void | Promise<void>;
 }
 
 export function registerShutdownHandlers(opts: ShutdownOptions) {
   let isShuttingDown = false;
 
-  const handler = (signal) => {
+  const handler = (signal: string) => {
     if (isShuttingDown) {
       logger.warn(
         `[${opts.name}] ${signal} received again — already shutting down, ignoring`
@@ -128,13 +130,13 @@ export function registerShutdownHandlers(opts: ShutdownOptions) {
       return;
     }
     isShuttingDown = true;
-    gracefulShutdown(opts);
+    performShutdown(opts, signal);
   };
 
   process.on("SIGTERM", () => handler("SIGTERM"));
   process.on("SIGINT", () => handler("SIGINT"));
 
-  process.on("unhandledRejection", (err) => {
+  process.on("unhandledRejection", (err: any) => {
     logger.error(`[${opts.name}] Unhandled rejection — triggering shutdown`, {
       error: err?.message,
     });

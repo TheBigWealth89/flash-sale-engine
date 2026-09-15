@@ -21,9 +21,9 @@ For the testing philosophy and infrastructure see [strategy.md](strategy.md). Fo
 
 ## Docker Test Environment
 
-The test suite uses `docker-compose.test.yml` which is managed **automatically** by `tests/setup/globalSetup.js`. You do not need to start Docker manually when using the npm scripts above.
+The test suite uses `docker-compose.test.yml` which is managed **automatically** by `tests/setup/globalSetup.ts`. You do not need to start Docker manually when using the npm scripts above.
 
-### What `globalSetup.js` does
+### What `globalSetup.ts` does
 
 ```
 npm test
@@ -61,7 +61,7 @@ If you have manually started `docker-compose.test.yml` (e.g. for debugging), you
 docker compose -f docker-compose.test.yml up -d --wait
 
 # Run tests repeatedly without teardown
-npx vitest run tests/integration/reservation.test.js
+npx vitest run tests/integration/reservation.test.ts
 
 # Tear down when done
 docker compose -f docker-compose.test.yml down -v
@@ -121,18 +121,18 @@ Within a single `npm test` run, Vitest executes in this order:
 ```
 1. globalSetup.setup()          — Docker up, schema created, Redis seeded
 2. tests/unit/                  — (no Docker dependency, fastest)
-   ├── redisKeys.test.js
-   └── authenticate.test.js
+   ├── redisKeys.test.ts
+   └── authenticate.test.ts
 3. tests/integration/           — (sequential, shared DB)
-   ├── auth.test.js
-   ├── health.test.js
-   ├── rateLimiter.test.js
-   ├── reservation.test.js
-   ├── checkout.test.js
-   └── webhook.test.js
+   ├── auth.test.ts
+   ├── health.test.ts
+   ├── rateLimiter.test.ts
+   ├── reservation.test.ts
+   ├── checkout.test.ts
+   └── webhook.test.ts
 4. tests/e2e/                   — (sequential, shared DB)
-   ├── fulfillWorker.test.js
-   └── expiresWorker.test.js
+   ├── fulfillWorker.test.ts
+   └── expiresWorker.test.ts
 5. globalSetup.teardown()       — Docker down -v
 ```
 
@@ -151,22 +151,22 @@ Files within each directory run in the order Vitest discovers them (alphabetical
 [globalSetup]  Redis connected (PONG received)
 [globalSetup]  Redis inventory seeded for product-1
 
- RUN  tests/unit/redisKeys.test.js
- RUN  tests/unit/authenticate.test.js
- RUN  tests/integration/auth.test.js
+ RUN  tests/unit/redisKeys.test.ts
+ RUN  tests/unit/authenticate.test.ts
+ RUN  tests/integration/auth.test.ts
  ...
- RUN  tests/e2e/expiresWorker.test.js
+ RUN  tests/e2e/expiresWorker.test.ts
 
- ✓ tests/unit/redisKeys.test.js (6)
- ✓ tests/unit/authenticate.test.js (4)
- ✓ tests/integration/auth.test.js (5)
- ✓ tests/integration/health.test.js (4)
- ✓ tests/integration/rateLimiter.test.js (3)
- ✓ tests/integration/reservation.test.js (6)
- ✓ tests/integration/checkout.test.js (3)
- ✓ tests/integration/webhook.test.js (4)
- ✓ tests/e2e/fulfillWorker.test.js (3)
- ✓ tests/e2e/expiresWorker.test.js (4)
+ ✓ tests/unit/redisKeys.test.ts (6)
+ ✓ tests/unit/authenticate.test.ts (4)
+ ✓ tests/integration/auth.test.ts (5)
+ ✓ tests/integration/health.test.ts (4)
+ ✓ tests/integration/rateLimiter.test.ts (3)
+ ✓ tests/integration/reservation.test.ts (6)
+ ✓ tests/integration/checkout.test.ts (3)
+ ✓ tests/integration/webhook.test.ts (4)
+ ✓ tests/e2e/fulfillWorker.test.ts (3)
+ ✓ tests/e2e/expiresWorker.test.ts (4)
 
  Test Files  10 passed (10)
       Tests  42 passed (42)
@@ -185,7 +185,7 @@ Files within each directory run in the order Vitest discovers them (alphabetical
 
 ## CI Integration
 
-The full test suite runs in a single CI step. No separate Docker setup step is needed — `globalSetup.js` manages the container lifecycle:
+The full test suite runs in a single CI step. No separate Docker setup step is needed — `globalSetup.ts` manages the container lifecycle:
 
 ```yaml
 # GitHub Actions example
@@ -195,7 +195,7 @@ The full test suite runs in a single CI step. No separate Docker setup step is n
 
 Prerequisites for CI:
 - Docker must be available in the CI runner (GitHub-hosted runners include Docker).
-- No environment variables from `.env.test` need to be set in CI — `globalSetup.js` uses hardcoded defaults matching `docker-compose.test.yml`.
+- No environment variables from `.env.test` need to be set in CI — `globalSetup.ts` uses hardcoded defaults matching `docker-compose.test.yml`.
 
 ---
 
@@ -205,21 +205,21 @@ Files are ranked from highest to lowest business risk. If time is limited, imple
 
 | Rank | File | Risk Category | Why |
 |---|---|---|---|
-| 1 | `tests/e2e/fulfillWorker.test.js` | **Data corruption** | The idempotency tests directly prevent double-inventory-decrement. A regression here costs money. |
-| 2 | `tests/integration/reservation.test.js` | **Data corruption + overselling** | The concurrency test is the core proof that the Lua script prevents race conditions. Loss of this test removes the main architectural guarantee. |
-| 3 | `tests/integration/webhook.test.js` | **Security + financial** | Tests Stripe signature verification and user identity validation. A regression could allow unauthenticated fulfillment or replay attacks. |
-| 4 | `tests/e2e/expiresWorker.test.js` | **Inventory leakage** | Proves abandoned reservations are released. Without this, stock is permanently locked on cart abandonment. |
-| 5 | `tests/integration/checkout.test.js` | **Financial accuracy** | Validates that expired reservations cannot proceed to payment. A regression could charge a user for stock they no longer hold. |
-| 6 | `tests/integration/auth.test.js` | **Security** | RBAC enforcement. A regression allows non-admin users to access the admin dashboard and cancel/retry jobs. |
-| 7 | `tests/integration/rateLimiter.test.js` | **Abuse prevention** | Rate limiting correctness. Lower priority than auth because a regression degrades protection rather than breaking a core flow. |
-| 8 | `tests/unit/authenticate.test.js` | **Security (unit level)** | JWT logic correctness. Covered partially by auth integration tests, but unit tests catch edge cases faster. |
-| 9 | `tests/unit/redisKeys.test.js` | **Key collision prevention** | Ensures Redis key generators produce correct strings. Low risk in practice but cheap to maintain. |
-| 10 | `tests/integration/health.test.js` | **Operational** | Health endpoint shape. Lowest risk — a shape change breaks monitoring alerts but not core business logic. |
+| 1 | `tests/e2e/fulfillWorker.test.ts` | **Data corruption** | The idempotency tests directly prevent double-inventory-decrement. A regression here costs money. |
+| 2 | `tests/integration/reservation.test.ts` | **Data corruption + overselling** | The concurrency test is the core proof that the Lua script prevents race conditions. Loss of this test removes the main architectural guarantee. |
+| 3 | `tests/integration/webhook.test.ts` | **Security + financial** | Tests Stripe signature verification and user identity validation. A regression could allow unauthenticated fulfillment or replay attacks. |
+| 4 | `tests/e2e/expiresWorker.test.ts` | **Inventory leakage** | Proves abandoned reservations are released. Without this, stock is permanently locked on cart abandonment. |
+| 5 | `tests/integration/checkout.test.ts` | **Financial accuracy** | Validates that expired reservations cannot proceed to payment. A regression could charge a user for stock they no longer hold. |
+| 6 | `tests/integration/auth.test.ts` | **Security** | RBAC enforcement. A regression allows non-admin users to access the admin dashboard and cancel/retry jobs. |
+| 7 | `tests/integration/rateLimiter.test.ts` | **Abuse prevention** | Rate limiting correctness. Lower priority than auth because a regression degrades protection rather than breaking a core flow. |
+| 8 | `tests/unit/authenticate.test.ts` | **Security (unit level)** | JWT logic correctness. Covered partially by auth integration tests, but unit tests catch edge cases faster. |
+| 9 | `tests/unit/redisKeys.test.ts` | **Key collision prevention** | Ensures Redis key generators produce correct strings. Low risk in practice but cheap to maintain. |
+| 10 | `tests/integration/health.test.ts` | **Operational** | Health endpoint shape. Lowest risk — a shape change breaks monitoring alerts but not core business logic. |
 
 ### Top 3 Files to Implement First (If Time Is Limited)
 
-1. **`tests/e2e/fulfillWorker.test.js`** — The idempotency test is the single most valuable test in the suite. It directly prevents a double-charge scenario that would be invisible without it and requires a manual database audit to detect.
+1. **`tests/e2e/fulfillWorker.test.ts`** — The idempotency test is the single most valuable test in the suite. It directly prevents a double-charge scenario that would be invisible without it and requires a manual database audit to detect.
 
-2. **`tests/integration/reservation.test.js`** — The concurrency `Promise.all` test is the only automated proof that the Lua script works correctly under load. Without it, the race condition protection is unverifiable by inspection alone.
+2. **`tests/integration/reservation.test.ts`** — The concurrency `Promise.all` test is the only automated proof that the Lua script works correctly under load. Without it, the race condition protection is unverifiable by inspection alone.
 
-3. **`tests/integration/webhook.test.js`** — The Stripe signature verification test and the metadata mismatch test protect the financial and security boundary of the application. Both are trivial to overlook in code review but catastrophic if broken in production.
+3. **`tests/integration/webhook.test.ts`** — The Stripe signature verification test and the metadata mismatch test protect the financial and security boundary of the application. Both are trivial to overlook in code review but catastrophic if broken in production.

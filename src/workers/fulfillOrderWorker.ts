@@ -13,7 +13,9 @@ const worker = new Worker(
 );
 
 worker.on("failed", (job, err) => {
-  logger.info(`Processing job ${job.id} attempt ${job.attemptsMade + 1}`);
+  if (job) {
+    logger.info(`Processing job ${job.id} attempt ${job.attemptsMade + 1}`);
+  }
 });
 
 registerShutdownHandlers({

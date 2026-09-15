@@ -30,7 +30,7 @@ This two-layer design means workers (which run as separate processes with no acc
 
 **When it fires**: Immediately after the Socket.IO connection is established (`socket.on("connect", ...)`).
 
-**Server handler** (`src/sockets/index.js`):
+**Server handler** (`src/sockets/index.ts`):
 ```js
 io.on("connection", (socket) => {
   socket.on("join-product-room", ({ productId }) => {
@@ -46,7 +46,7 @@ io.on("connection", (socket) => {
 | Field | Value |
 |---|---|
 | Direction | Server → Browser (room broadcast) |
-| Emitter | `src/sockets/index.js` Redis subscriber handler |
+| Emitter | `src/sockets/index.ts` Redis subscriber handler |
 | Target | All sockets in room `product-{productId}` |
 | Payload | `{ newInventory: number }` |
 | Effect | Client updates the inventory count displayed on the product page without a page refresh. |
@@ -79,8 +79,8 @@ socket.on("inventory-update", ({ newInventory }) => {
 |---|---|
 | Channel name | `inventory-updates` |
 | Message format | JSON string |
-| Publishers | `inventory.service.js`, `routes/products.js` |
-| Subscriber | `src/sockets/index.js` |
+| Publishers | `inventory.service.ts`, `routes/products.ts` |
+| Subscriber | `src/sockets/index.ts` |
 c
 **Message format**:
 ```json
@@ -93,16 +93,16 @@ All values are strings (Redis stores all values as strings). `newInventory` must
 
 | Publisher | When |
 |---|---|
-| `inventory.service.js` → `returnStock()` | When a reservation expires (`expiresWorker`), a job is cancelled (`cleanupWorker`), or an admin cancels an order |
-| `routes/products.js` | Immediately after a successful reservation (`POST /product/:id/reserve`) |
+| `inventory.service.ts` → `returnStock()` | When a reservation expires (`expiresWorker`), a job is cancelled (`cleanupWorker`), or an admin cancels an order |
+| `routes/products.ts` | Immediately after a successful reservation (`POST /product/:id/reserve`) |
 
 ---
 
 ## The Redis → Socket.IO Bridge
 
-`src/sockets/index.js` performs the bridge. Here is the full sequence:
+`src/sockets/index.ts` performs the bridge. Here is the full sequence:
 
-1. At startup, `initSockets(httpServer)` is called from `server.js`. It creates the Socket.IO server and attaches it to the HTTP server.
+1. At startup, `initSockets(httpServer)` is called from `server.ts`. It creates the Socket.IO server and attaches it to the HTTP server.
 2. A *separate* Redis client is created by calling `redisClient.duplicate()`. This duplicate is used exclusively for the subscriber role. A Redis client that has issued `SUBSCRIBE` cannot send other commands — it is in a dedicated subscription mode.
 3. `subscriber.subscribe("inventory-updates")` puts the duplicate client in subscribe mode.
 4. On every message received:

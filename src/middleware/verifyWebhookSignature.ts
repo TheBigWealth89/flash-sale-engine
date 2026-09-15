@@ -9,8 +9,8 @@ export const verifyStripeWebhook = (req: WebhookRequest, res: Response, next: Ne
   try {
     req.stripeEvent = stripe.webhooks.constructEvent(
       req.body,
-      sig,
-      process.env.STRIPE_WEBHOOK_SECRET
+      sig as string | string[],
+      process.env.STRIPE_WEBHOOK_SECRET!
     );
     next();
   } catch (err: any) {

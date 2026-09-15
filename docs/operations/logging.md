@@ -1,12 +1,12 @@
 # Logging
 
-The system uses [Winston](https://github.com/winstonjs/winston) for structured, level-filtered logging across all four processes. Every process instantiates the same logger from `src/utils/logger.js`.
+The system uses [Winston](https://github.com/winstonjs/winston) for structured, level-filtered logging across all four processes. Every process instantiates the same logger from `src/utils/logger.ts`.
 
 ---
 
 ## Configuration
 
-**Source**: `src/utils/logger.js`
+**Source**: `src/utils/logger.ts`
 
 Winston is configured with a custom set of log levels, two file transports, and one console transport. The console transport is suppressed in production.
 

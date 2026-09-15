@@ -39,8 +39,8 @@ router.get("/dashboard", async (req: AuthRequest, res: Response) => {
 
 // Update Inventory
 router.post("/products/:id/inventory", async (req: AuthRequest, res: Response) => {
+  const { id } = req.params;
   try {
-    const { id } = req.params;
     const { inventory } = req.body;
 
     if (isNaN(inventory) || parseInt(inventory) < 0) {
@@ -49,7 +49,7 @@ router.post("/products/:id/inventory", async (req: AuthRequest, res: Response) =
 
     await inventoryService.updateProductInventory(id, parseInt(inventory));
 
-    logger.info(`Admin ${req.user.id} manually set product ${id} inventory to ${inventory}`);
+    logger.info(`Admin ${req.user?.id} manually set product ${id} inventory to ${inventory}`);
     res.redirect("/admin/dashboard");
   } catch (err) {
     logger.error(`Failed to update product ${id} inventory:`, err);
@@ -62,10 +62,10 @@ router.post("/products/:id/inventory", async (req: AuthRequest, res: Response) =
 
 // Retry job
 router.post("/jobs/:jobId/retry", async (req: AuthRequest, res: Response) => {
+  const { jobId } = req.params;
   try {
 
-    const { jobId } = req.params;
-    const job = await purchaseQueue.getJob(jobId);
+    const job = await purchaseQueue.getJob(jobId as string);
 
     if (!job || !(await job.isFailed())) {
       return res.status(404).send("Job not found or not failed");
@@ -73,7 +73,7 @@ router.post("/jobs/:jobId/retry", async (req: AuthRequest, res: Response) => {
 
     await job.retry();
     logger.info(`Admin retried job ${jobId}`, {
-      user: req.user.id,
+      user: req.user?.id,
     });
     res.redirect("/admin/dashboard");
   } catch (err) {
@@ -92,7 +92,7 @@ router.post("/jobs/:jobId/cancel", async (req: AuthRequest, res: Response) => {
   try {
 
     logger.info(`Job id ${jobId}`);
-    const job = await purchaseQueue.getJob(jobId);
+    const job = await purchaseQueue.getJob(jobId as string);
 
     if (!job || !(await job.isFailed())) {
       return res.status(404).send("Job not found or not failed");
@@ -135,7 +135,7 @@ router.post("/jobs/:jobId/cancel", async (req: AuthRequest, res: Response) => {
     await client.query("COMMIT");
     await job.remove();
     logger.info(`Admin cancelled job ${jobId}`, {
-      user: req.user.id,
+      user: req.user?.id,
     });
 
     res.redirect("/admin/dashboard");

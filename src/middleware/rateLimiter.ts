@@ -1,6 +1,8 @@
-import rateLimit from "express-rate-limit";
+import rateLimit, { ipKeyGenerator } from "express-rate-limit";
 import RedisStore from "rate-limit-redis";
 import { redisClient } from "../db/connections.js";
+import { AuthRequest } from "./authenticate.js";
+import { Response, NextFunction } from "express";
 
 /*
  Creates a RedisStore for express-rate-limit.
@@ -19,11 +21,8 @@ const baseConfig = {
   standardHeaders: true, // sends RateLimit-Limit, RateLimit-Remaining, RateLimit-Reset
   legacyHeaders: false, // disables X-RateLimit-* (deprecated)
 
-  // Using the verified user ID from the authentication middleware.
-  keyGenerator: (req) => req.user?.id,
-
-  // Custom JSON handler for API consistency
-  handler: (req, res, next, options) => {
+  keyGenerator: (req: AuthRequest, res: Response) => req.user?.id || (req.ip ? ipKeyGenerator(req.ip) : "unknown"),
+  handler: (req: AuthRequest, res: Response, next: NextFunction, options: any) => {
     res.status(429).json({
       error: options.message,
       retryAfter: Math.ceil(options.windowMs / 1000),
@@ -31,7 +30,7 @@ const baseConfig = {
   },
 
   // Skip health checks to avoid exhausting IP limits via load balancers
-  skip: (req) => req.path === "/health",
+  skip: (req: AuthRequest) => req.path === "/health",
 };
 
 export const reserveLimiter = rateLimit({

@@ -10,7 +10,7 @@ The project ships three Docker Compose files for three distinct purposes. Never 
 |---|---|---|---|---|
 | `docker-compose.yml` | Cloud-connected, production-like | Render PostgreSQL + RedisLabs | `.env` | `docker compose up --watch` |
 | `docker-compose.local.yml` | Fully local development | Local containers | `.env.local` | `docker compose -f docker-compose.local.yml up --watch` |
-| `docker-compose.test.yml` | Isolated test environment | Local containers (tmpfs) | `.env.test` (via Vitest) | Managed automatically by `globalSetup.js` |
+| `docker-compose.test.yml` | Isolated test environment | Local containers (tmpfs) | `.env.test` (via Vitest) | Managed automatically by `globalSetup.ts` |
 
 ---
 
@@ -96,9 +96,9 @@ Application containers declare `depends_on` with `condition: service_healthy` so
 
 ## `docker-compose.test.yml` — Isolated Test Environment
 
-**Purpose**: Provides dedicated, ephemeral PostgreSQL and Redis containers strictly for the test suite. Managed automatically by Vitest's `globalSetup.js` — developers do not run this file directly.
+**Purpose**: Provides dedicated, ephemeral PostgreSQL and Redis containers strictly for the test suite. Managed automatically by Vitest's `globalSetup.ts` — developers do not run this file directly.
 
-**When to use it**: Never manually. It is started by `npm test`, `npm run test:integration`, and `npm run test:e2e` via `globalSetup.js`.
+**When to use it**: Never manually. It is started by `npm test`, `npm run test:integration`, and `npm run test:e2e` via `globalSetup.ts`.
 
 **Services started**:
 
@@ -109,7 +109,7 @@ Application containers declare `depends_on` with `condition: service_healthy` so
 
 **No API server or worker containers** — the test suite imports the Express app directly via `supertest` and calls processor functions directly, with no live processes required.
 
-**Exact command used by `globalSetup.js`**:
+**Exact command used by `globalSetup.ts`**:
 ```bash
 # Start and wait for health checks to pass
 docker compose -f docker-compose.test.yml up -d --wait

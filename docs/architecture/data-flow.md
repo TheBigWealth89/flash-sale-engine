@@ -72,7 +72,7 @@ sequenceDiagram
 
 ### Phase 3 — Payment Confirmation
 
-12. The browser calls `stripe.confirmCardPayment(clientSecret)` using Stripe.js.
+12. The browser calls `stripe.confirmCardPayment(clientSecret)` using Stripe.ts.
 13. Stripe processes the card. On success it POSTs `payment_intent.succeeded` to `POST /webhook-stripe`.
 14. The API verifies the webhook signature using `STRIPE_WEBHOOK_SECRET`. Invalid signatures return `400`.
 15. The API compares `event.data.object.metadata.user_id` with the `user_id` from the database order row. A mismatch (possible replay attack or data corruption) aborts with a `200` (so Stripe stops retrying) plus a warning log.
@@ -96,10 +96,10 @@ The real-time inventory update path is a one-way bridge from any process that ch
 ```
 Publisher                    Redis                     Subscriber (API Server)
 ────────────────────         ──────────────────        ──────────────────────────────────
-inventory.service.js         channel:                  sockets/index.js
+inventory.service.ts         channel:                  sockets/index.ts
   returnStock(productId)  →  inventory-updates      →  redis.on('message', handler)
                              message:                    ↓
-products.js (reserve)     →  { productId,              JSON.parse(message)
+products.ts (reserve)     →  { productId,              JSON.parse(message)
                                newInventory }            ↓
 expiresWorker              →                          io.to(`product-${productId}`)
 cleanupWorker              →                            .emit('inventory-update', { newInventory })
@@ -115,9 +115,9 @@ cleanupWorker              →                            .emit('inventory-updat
 { "productId": "1", "newInventory": 4 }
 ```
 
-**Publishers**: `inventory.service.js` (called by `expiresWorker`, `cleanupWorker`, and `admin.js` cancel), and `products.js` (directly after a successful reservation).
+**Publishers**: `inventory.service.ts` (called by `expiresWorker`, `cleanupWorker`, and `admin.ts` cancel), and `products.ts` (directly after a successful reservation).
 
-**Subscriber**: `sockets/index.js` creates a *duplicate* of the shared Redis client specifically for the subscriber role (a Redis client in subscribe mode cannot issue other commands). On every message it parses the JSON and emits the `inventory-update` Socket.IO event to the `product-{id}` room.
+**Subscriber**: `sockets/index.ts` creates a *duplicate* of the shared Redis client specifically for the subscriber role (a Redis client in subscribe mode cannot issue other commands). On every message it parses the JSON and emits the `inventory-update` Socket.IO event to the `product-{id}` room.
 
 See [../api/websockets.md](../api/websockets.md) for the client-side Socket.IO event details.
 
@@ -133,7 +133,7 @@ _intent               verifyWebhookSignature
 .succeeded   ──────►  middleware validates           
                       signature                     
                       ↓                             
-                      webhook.js handler:           
+                      webhook.ts handler:           
                       1. Query PG for order         orders: SELECT WHERE
                          by stripe PI id    ──────► payment_intent_id = $1
                       2. Validate metadata          

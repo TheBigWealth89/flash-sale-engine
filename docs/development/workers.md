@@ -19,15 +19,15 @@ The three workers (`fulfillOrderWorker`, `expiresWorker`, `cleanupWorker`) each 
 
 ## Processor Extraction — `src/workers/processors/`
 
-Each worker file (`fulfillOrderWorker.js`, `expiresWorker.js`, `cleanupWorker.js`) originally contained both the process infrastructure (BullMQ worker setup, cron schedule, signal handlers) and the core business logic (the SQL queries and Redis operations).
+Each worker file (`fulfillOrderWorker.ts`, `expiresWorker.ts`, `cleanupWorker.ts`) originally contained both the process infrastructure (BullMQ worker setup, cron schedule, signal handlers) and the core business logic (the SQL queries and Redis operations).
 
 To make the business logic testable without fighting BullMQ timing or `node-cron` scheduling, the data-processing code was extracted into separate **processor functions** in `src/workers/processors/`:
 
 | Processor File | Exports | Called By |
 |---|---|---|
-| `processors/fulfillOrderProcessor.js` | `fulfillOrderProcessor(job)` | `fulfillOrderWorker.js` BullMQ job handler |
-| `processors/expiryProcessor.js` | `expiryProcessor()` | `expiresWorker.js` poll interval handler |
-| `processors/cleanupProcessor.js` | `cleanupProcessor()` | `cleanupWorker.js` cron tick handler |
+| `processors/fulfillOrderProcessor.ts` | `fulfillOrderProcessor(job)` | `fulfillOrderWorker.ts` BullMQ job handler |
+| `processors/expiryProcessor.ts` | `expiryProcessor()` | `expiresWorker.ts` poll interval handler |
+| `processors/cleanupProcessor.ts` | `cleanupProcessor()` | `cleanupWorker.ts` cron tick handler |
 
 The worker files now act as thin process wrappers: they set up the queue/cron/interval, register signal handlers, and pass control to the processor. The E2E tests import the processor functions directly and call them with controlled arguments, asserting the resulting database and Redis state without running the actual worker process.
 
@@ -35,12 +35,12 @@ The worker files now act as thin process wrappers: they set up the queue/cron/in
 
 ## `fulfillOrderWorker` — BullMQ Queue Worker
 
-**File**: `src/workers/fulfillOrderWorker.js`
-**Processor**: `src/workers/processors/fulfillOrderProcessor.js`
+**File**: `src/workers/fulfillOrderWorker.ts`
+**Processor**: `src/workers/processors/fulfillOrderProcessor.ts`
 
 ### Trigger
 
-The `fulfill-order` BullMQ job is added to the queue by `routes/webhook.js` when Stripe fires a `payment_intent.succeeded` event and identity validation passes.
+The `fulfill-order` BullMQ job is added to the queue by `routes/webhook.ts` when Stripe fires a `payment_intent.succeeded` event and identity validation passes.
 
 ### Queue Configuration
 
@@ -50,7 +50,7 @@ new Worker("fulfill-order", fulfillOrderProcessor, { connection: redisClient });
 
 | Option | Value | Reason |
 |---|---|---|
-| Queue name | `fulfill-order` | Matches the queue defined in `purchaseQueue.js` |
+| Queue name | `fulfill-order` | Matches the queue defined in `purchaseQueue.ts` |
 | Job attempts | `3` | Covers transient DB failures without losing the purchase |
 | Backoff type | `fixed` | 1 second delay between retries |
 | `removeOnComplete` | `true` | Keeps the queue clean; completed jobs need no further action |
@@ -76,8 +76,8 @@ new Worker("fulfill-order", fulfillOrderProcessor, { connection: redisClient });
 
 ## `expiresWorker` — Polling Worker
 
-**File**: `src/workers/expiresWorker.js`
-**Processor**: `src/workers/processors/expiryProcessor.js`
+**File**: `src/workers/expiresWorker.ts`
+**Processor**: `src/workers/processors/expiryProcessor.ts`
 
 ### Type and Interval
 
@@ -120,8 +120,8 @@ If multiple `expiresWorker` replicas run simultaneously (or if a previous poll c
 
 ## `cleanupWorker` — Cron Worker
 
-**File**: `src/workers/cleanupWorker.js`
-**Processor**: `src/workers/processors/cleanupProcessor.js`
+**File**: `src/workers/cleanupWorker.ts`
+**Processor**: `src/workers/processors/cleanupProcessor.ts`
 
 ### Type and Schedule
 

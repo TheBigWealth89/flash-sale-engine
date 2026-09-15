@@ -40,13 +40,13 @@ export default defineConfig({
     pool:            "forks",      // Each test file runs in a separate child process
     testTimeout:     15000,        // 15s per test — covers slow DB round-trips
     hookTimeout:     15000,        // 15s for beforeEach/afterEach hooks
-    include:         ["tests/**/*.test.js"],
-    globalSetup:     ["./tests/setup/globalSetup.js"],
+    include:         ["tests/**/*.test.ts"],
+    globalSetup:     ["./tests/setup/globalSetup.ts"],
     fileParallelism: false,        // Test files run sequentially (shared DB state)
     coverage: {
       provider: "v8",
-      include:  ["src/**/*.js"],
-      exclude:  ["src/views/**", "src/public/**", "src/assets/**", "src/config/loadEnv.js"],
+      include:  ["src/**/*.ts"],
+      exclude:  ["src/views/**", "src/public/**", "src/assets/**", "src/config/loadEnv.ts"],
     },
     sequence: {
       setupFiles: "list",          // setupFiles run in defined order, not parallel
@@ -78,8 +78,8 @@ export default defineConfig({
 Unit tests have zero external dependencies. They import a function, call it with controlled inputs, and assert the output. No database connections, no Redis, no network. They run in milliseconds and can execute without Docker.
 
 Currently covers:
-- `src/utils/redisKeys.js` — key generator functions produce correct string formats.
-- `src/middleware/authenticate.js` — JWT signing and role extraction from raw tokens.
+- `src/utils/redisKeys.ts` — key generator functions produce correct string formats.
+- `src/middleware/authenticate.ts` — JWT signing and role extraction from raw tokens.
 
 ### Integration Tests
 
@@ -116,7 +116,7 @@ The test environment uses its own Compose file (`docker-compose.test.yml`) rathe
 
 ## Global Setup and Teardown
 
-**File**: `tests/setup/globalSetup.js`
+**File**: `tests/setup/globalSetup.ts`
 
 Runs once before any test file executes. Exports two functions that Vitest calls in sequence:
 
@@ -126,7 +126,7 @@ Runs once before any test file executes. Exports two functions that Vitest calls
 2. Runs `docker compose -f docker-compose.test.yml up -d --wait` — starts containers and blocks until healthchecks pass.
 3. Connects to `postgres-test`, drops existing tables, and runs `sql/init.sql` to create a clean schema.
 4. Connects to `redis-test`, runs `PING` to verify connectivity, seeds `inventory:product-1 = 5`.
-5. Closes both connections (test files create their own connections via `testHelpers.js`).
+5. Closes both connections (test files create their own connections via `testHelpers.ts`).
 
 ### `teardown()`
 
@@ -145,9 +145,9 @@ Integration tests share a single database. To prevent test order from affecting 
 
 ---
 
-## `testHelpers.js` Exports
+## `testHelpers.ts` Exports
 
-**File**: `tests/setup/testHelpers.js`
+**File**: `tests/setup/testHelpers.ts`
 
 Provides lazy-initialised shared connections and reusable utilities. Connections are created once per Vitest worker process (not once per test file).
 

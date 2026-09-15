@@ -139,14 +139,14 @@ npm run dev:cleanupWorker
 
 | Script | Command | Purpose |
 |---|---|---|
-| `dev` | `cross-env NODE_ENV=development nodemon src/server.js` | API server with Nodemon hot reload |
-| `dev:fulfillOrderWorker` | `cross-env NODE_ENV=development node src/workers/fulfillOrderWorker.js` | Fulfill worker (dev) |
-| `dev:expiresWorker` | `cross-env NODE_ENV=development node src/workers/expiresWorker.js` | Expiration worker (dev) |
-| `dev:cleanupWorker` | `cross-env NODE_ENV=development node src/workers/cleanupWorker.js` | Cleanup worker (dev) |
-| `start` | `cross-env NODE_ENV=production node src/server.js` | API server (production) |
-| `start:fulfillOrderWorker` | `cross-env NODE_ENV=production node src/workers/fulfillOrderWorker.js` | Fulfill worker (production) |
-| `start:expiresWorker` | `cross-env NODE_ENV=production node src/workers/expiresWorker.js` | Expiration worker (production) |
-| `start:cleanupWorker` | `cross-env NODE_ENV=production node src/workers/cleanupWorker.js` | Cleanup worker (production) |
+| `dev` | `cross-env NODE_ENV=development nodemon src/server.ts` | API server with Nodemon hot reload |
+| `dev:fulfillOrderWorker` | `cross-env NODE_ENV=development node src/workers/fulfillOrderWorker.ts` | Fulfill worker (dev) |
+| `dev:expiresWorker` | `cross-env NODE_ENV=development node src/workers/expiresWorker.ts` | Expiration worker (dev) |
+| `dev:cleanupWorker` | `cross-env NODE_ENV=development node src/workers/cleanupWorker.ts` | Cleanup worker (dev) |
+| `start` | `cross-env NODE_ENV=production node src/server.ts` | API server (production) |
+| `start:fulfillOrderWorker` | `cross-env NODE_ENV=production node src/workers/fulfillOrderWorker.ts` | Fulfill worker (production) |
+| `start:expiresWorker` | `cross-env NODE_ENV=production node src/workers/expiresWorker.ts` | Expiration worker (production) |
+| `start:cleanupWorker` | `cross-env NODE_ENV=production node src/workers/cleanupWorker.ts` | Cleanup worker (production) |
 | `test` | `cross-env NODE_ENV=test vitest run` | Run full test suite (auto-manages Docker) |
 | `test:unit` | `cross-env NODE_ENV=test vitest run tests/unit` | Unit tests only (no Docker) |
 | `test:integration` | `cross-env NODE_ENV=test vitest run tests/integration` | Integration tests (auto Docker) |
@@ -160,9 +160,9 @@ npm run dev:cleanupWorker
 
 ### Error: `EADDRINUSE: address already in use :::3000`
 
-**Cause**: `src/server.js` contains both `httpServer.listen(3000)` and `app.listen(port)` — port 3000 is bound twice. This is a known bug in the current codebase.
+**Cause**: `src/server.ts` contains both `httpServer.listen(3000)` and `app.listen(port)` — port 3000 is bound twice. This is a known bug in the current codebase.
 
-**Fix**: In `src/server.js`, remove the `app.listen(port)` call and keep only `httpServer.listen(3000)`. The `httpServer` (created by `node:http`) is the correct listener because Socket.IO is attached to it.
+**Fix**: In `src/server.ts`, remove the `app.listen(port)` call and keep only `httpServer.listen(3000)`. The `httpServer` (created by `node:http`) is the correct listener because Socket.IO is attached to it.
 
 ---
 
@@ -181,7 +181,7 @@ npm run dev:cleanupWorker
 **Fix**:
 1. Confirm `.env` (or `.env.local`) exists in the project root.
 2. Check that all variables listed in the [Environment Variables](#environment-variables) table are present and non-empty.
-3. Confirm `src/config/loadEnv.js` is resolving the path to the project root correctly — it uses `import.meta.url` to find the file regardless of the working directory.
+3. Confirm `src/config/loadEnv.ts` is resolving the path to the project root correctly — it uses `import.meta.url` to find the file regardless of the working directory.
 
 ---
 

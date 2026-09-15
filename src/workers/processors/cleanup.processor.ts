@@ -21,7 +21,7 @@ export async function cleanupProcessor(job: Job) {
       [orderId]
     );
 
-    if (updateResult.rowCount > 0) {
+    if (updateResult.rowCount && updateResult.rowCount > 0) {
       const order = (
         await client.query("SELECT product_id FROM orders WHERE id = $1", [
           orderId,

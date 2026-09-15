@@ -14,7 +14,7 @@ import logger from "../utils/logger.js";
  *
  * @param {number|null} targetProductId - Optional product ID to sync a single product. If null, syncs all products.
  */
-export const syncInventoryToRedis = async (targetProductId = null) => {
+export const syncInventoryToRedis = async (targetProductId: string | number | null = null) => {
   try {
     // Single aggregated query using LEFT JOIN and PostgreSQL FILTER conditional aggregates
     // to calculate active reservations ('reserved' and 'payment_pending') in one DB round-trip.
@@ -27,7 +27,7 @@ export const syncInventoryToRedis = async (targetProductId = null) => {
       FROM products p
       LEFT JOIN orders o ON p.id = o.product_id AND o.status IN ('reserved', 'payment_pending')
     `;
-    let params = [];
+    let params: any[] = [];
 
     if (targetProductId) {
       query += " WHERE p.id = $1";

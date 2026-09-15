@@ -44,7 +44,7 @@ See [development/workers.md](../development/workers.md) for internals of each wo
 product_reservation/
 ├── .env                          # Environment variables (gitignored)
 ├── .example.env                  # Template for .env
-├── .gitignore                    # .env, node_modules, logs, clear.js
+├── .gitignore                    # .env, node_modules, logs, clear.ts
 ├── package.json                  # ESM project, scripts, dependencies
 ├── decrement_inventory.lua       # Atomic Redis inventory decrement
 ├── validate_cart.lua             # Atomic cart validation at checkout
@@ -60,40 +60,40 @@ product_reservation/
 │   ├── api.Dockerfile            # Dockerfile for API server
 │   └── worker.Dockerfile         # Dockerfile for worker processes
 └── src/
-    ├── app.js                    # Express app config (no listen) — for testing
-    ├── server.js                 # Application entry point (calls app.listen)
+    ├── app.ts                    # Express app config (no listen) — for testing
+    ├── server.ts                 # Application entry point (calls app.listen)
     ├── config/
-    │   └── loadEnv.js            # dotenv loader (resolves project root)
+    │   └── loadEnv.ts            # dotenv loader (resolves project root)
     ├── db/
-    │   ├── connections.js        # PostgreSQL Pool + Redis client exports
-    │   └── sync-inventory.js     # Startup inventory sync (PG → Redis)
+    │   ├── connections.ts        # PostgreSQL Pool + Redis client exports
+    │   └── sync-inventory.ts     # Startup inventory sync (PG → Redis)
     ├── middleware/
-    │   ├── authenticate.js       # JWT cookie authentication & role guard
-    │   ├── rateLimiter.js        # Redis-backed express rate limiters
-    │   └── verifyWebhookSignature.js  # Stripe webhook signature verify
+    │   ├── authenticate.ts       # JWT cookie authentication & role guard
+    │   ├── rateLimiter.ts        # Redis-backed express rate limiters
+    │   └── verifyWebhookSignature.ts  # Stripe webhook signature verify
     ├── routes/
-    │   ├── products.js           # Product CRUD, reservation, checkout, payment
-    │   ├── admin.js              # Admin dashboard, retry/cancel failed jobs
-    │   ├── auth.route.js         # Unified login/logout & JWT issuing
-    │   └── webhook.js            # Stripe webhook endpoint
+    │   ├── products.ts           # Product CRUD, reservation, checkout, payment
+    │   ├── admin.ts              # Admin dashboard, retry/cancel failed jobs
+    │   ├── auth.route.ts         # Unified login/logout & JWT issuing
+    │   └── webhook.ts            # Stripe webhook endpoint
     ├── service/
-    │   └── inventory.service.js  # returnStock() — atomic Redis INCR + Pub/Sub
+    │   └── inventory.service.ts  # returnStock() — atomic Redis INCR + Pub/Sub
     ├── queues/
-    │   └── purchaseQueue.js      # BullMQ "fulfill-order" queue definition
+    │   └── purchaseQueue.ts      # BullMQ "fulfill-order" queue definition
     ├── sockets/
-    │   └── index.js              # Socket.IO init + Redis subscriber bridge
+    │   └── index.ts              # Socket.IO init + Redis subscriber bridge
     ├── utils/
-    │   ├── logger.js             # Winston logger (console + file transports)
-    │   ├── redisKeys.js          # Centralized Redis key generators
-    │   └── shutdown.js           # Shared graceful shutdown utility
+    │   ├── logger.ts             # Winston logger (console + file transports)
+    │   ├── redisKeys.ts          # Centralized Redis key generators
+    │   └── shutdown.ts           # Shared graceful shutdown utility
     ├── workers/
-    │   ├── fulfillOrderWorker.js # BullMQ worker — fulfills paid orders
-    │   ├── expiresWorker.js      # Polling worker — expires stale reservations
-    │   ├── cleanupWorker.js      # Cron worker — cancels permanently failed jobs
+    │   ├── fulfillOrderWorker.ts # BullMQ worker — fulfills paid orders
+    │   ├── expiresWorker.ts      # Polling worker — expires stale reservations
+    │   ├── cleanupWorker.ts      # Cron worker — cancels permanently failed jobs
     │   └── processors/           # Extracted processor functions (for testability)
-    │       ├── fulfillOrderProcessor.js
-    │       ├── expiryProcessor.js
-    │       └── cleanupProcessor.js
+    │       ├── fulfillOrderProcessor.ts
+    │       ├── expiryProcessor.ts
+    │       └── cleanupProcessor.ts
     ├── views/
     │   ├── product.ejs           # Product detail + real-time inventory
     │   ├── orderPage.ejs         # Checkout / Stripe card payment
@@ -140,8 +140,8 @@ Stripe expects the webhook endpoint to respond with HTTP 200 within 30 seconds. 
 
 See the rationale in the 4-Process Model section above. The short answer: crash isolation, independent scaling, and clean `SIGTERM` handling per process.
 
-### Why `src/app.js` separate from `src/server.js`?
+### Why `src/app.ts` separate from `src/server.ts`?
 
-The test suite uses `supertest`, which wraps the Express app directly without opening a real port. If `app.listen()` were called at import time (as in a typical `server.js`), every test file import would bind port 3000 and trigger `EADDRINUSE`. Extracting the Express configuration into `app.js` lets the test runner import it safely; `server.js` is the only file that calls `app.listen()`.
+The test suite uses `supertest`, which wraps the Express app directly without opening a real port. If `app.listen()` were called at import time (as in a typical `server.ts`), every test file import would bind port 3000 and trigger `EADDRINUSE`. Extracting the Express configuration into `app.ts` lets the test runner import it safely; `server.ts` is the only file that calls `app.listen()`.
 
 For API routes see [api/endpoints.md](../api/endpoints.md). For worker internals see [development/workers.md](../development/workers.md).

@@ -127,7 +127,7 @@ export class CheckoutService {
             [successfulItems]
           );
           await compensationClient.query('COMMIT');
-          logger.info('✅ Compensation successful. Orders are back in a reserved state.');
+          logger.info('Compensation successful. Orders are back in a reserved state.');
         } catch (compensationError) {
           if (compensationClient) {
             try { await compensationClient.query('ROLLBACK'); } catch (e) {}

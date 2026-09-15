@@ -2,7 +2,7 @@
 
 Complete reference for every HTTP route in the Product Reservation System. Routes are grouped by mount point.
 
-Authentication is handled by `middleware/authenticate.js` — JWT extracted from `req.cookies.token` or `Authorization: Bearer <token>`. Rate limiting state is stored in Redis and keyed by authenticated user ID.
+Authentication is handled by `middleware/authenticate.ts` — JWT extracted from `req.cookies.token` or `Authorization: Bearer <token>`. Rate limiting state is stored in Redis and keyed by authenticated user ID.
 
 ---
 
@@ -121,7 +121,7 @@ Authentication is handled by `middleware/authenticate.js` — JWT extracted from
 | Rate limit | None |
 | Description | Receives `payment_intent.succeeded` events from Stripe. Enqueues a BullMQ fulfillment job and cleans up reservation/cart keys. |
 
-> **Important**: This route is mounted *before* `express.json()` in `server.js`. Stripe requires the raw, unparsed request body for signature verification. Passing a parsed JSON body will cause signature verification to fail with `400`.
+> **Important**: This route is mounted *before* `express.json()` in `server.ts`. Stripe requires the raw, unparsed request body for signature verification. Passing a parsed JSON body will cause signature verification to fail with `400`.
 
 **Headers**:
 

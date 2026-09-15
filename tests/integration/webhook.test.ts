@@ -48,7 +48,7 @@ const redis = getRedis();
 const request = getRequest();
 
 describe("Webhook Fulfillment (Path D)", () => {
-  let product;
+  let product: any;
 
   beforeEach(async () => {
     vi.clearAllMocks();

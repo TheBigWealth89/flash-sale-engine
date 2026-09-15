@@ -19,7 +19,7 @@ When Docker stops a container it sends **SIGTERM**. Without a handler, Node.js e
 
 ## Architecture
 
-### Shared Utility — `src/utils/shutdown.js`
+### Shared Utility — `src/utils/shutdown.ts`
 
 A single async helper used by all four processes. Each caller passes only the handles it owns (API server passes `io` and `httpServer`; workers pass `worker` or `task`).
 
@@ -61,7 +61,7 @@ The 20 s → 25 s → 30 s ladder guarantees the process always exits cleanly be
 
 ## Per-Process Shutdown Sequences
 
-### API Server (`src/server.js`)
+### API Server (`src/server.ts`)
 
 ```
 SIGTERM / SIGINT
@@ -77,11 +77,11 @@ redisClient.quit()   — send QUIT command; Redis closes the connection cleanly
 process.exit(0)
 ```
 
-**Key prerequisite**: `initSockets()` in `src/sockets/index.js` returns the `io` instance so `server.js` can pass it to the shutdown handler. Without the return value, `io.close()` cannot be called.
+**Key prerequisite**: `initSockets()` in `src/sockets/index.ts` returns the `io` instance so `server.ts` can pass it to the shutdown handler. Without the return value, `io.close()` cannot be called.
 
 ---
 
-### fulfillOrderWorker (`src/workers/fulfillOrderWorker.js`)
+### fulfillOrderWorker (`src/workers/fulfillOrderWorker.ts`)
 
 ```
 SIGTERM / SIGINT
@@ -102,7 +102,7 @@ process.exit(0)
 
 ---
 
-### expiresWorker (`src/workers/expiresWorker.js`)
+### expiresWorker (`src/workers/expiresWorker.ts`)
 
 ```
 SIGTERM / SIGINT
@@ -123,7 +123,7 @@ process.exit(0)
 
 ---
 
-### cleanupWorker (`src/workers/cleanupWorker.js`)
+### cleanupWorker (`src/workers/cleanupWorker.ts`)
 
 ```
 SIGTERM / SIGINT
@@ -175,12 +175,12 @@ The second signal logs a warning and returns immediately. Only one shutdown sequ
 
 | File | Change |
 |---|---|
-| `src/utils/shutdown.js` | **Created** — shared `registerShutdownHandlers` + `gracefulShutdown` utility |
-| `src/sockets/index.js` | `initSockets()` now returns the `io` instance |
-| `src/server.js` | Captures `io` return value; calls `registerShutdownHandlers` |
-| `src/workers/fulfillOrderWorker.js` | Captures `worker` in `const`; calls `registerShutdownHandlers` |
-| `src/workers/expiresWorker.js` | Adds `_runningPromise` tracking, `stop()` method, `registerShutdownHandlers` |
-| `src/workers/cleanupWorker.js` | Captures `task` from `cron.schedule()`; calls `registerShutdownHandlers` |
+| `src/utils/shutdown.ts` | **Created** — shared `registerShutdownHandlers` + `gracefulShutdown` utility |
+| `src/sockets/index.ts` | `initSockets()` now returns the `io` instance |
+| `src/server.ts` | Captures `io` return value; calls `registerShutdownHandlers` |
+| `src/workers/fulfillOrderWorker.ts` | Captures `worker` in `const`; calls `registerShutdownHandlers` |
+| `src/workers/expiresWorker.ts` | Adds `_runningPromise` tracking, `stop()` method, `registerShutdownHandlers` |
+| `src/workers/cleanupWorker.ts` | Captures `task` from `cron.schedule()`; calls `registerShutdownHandlers` |
 | `docker-compose.yml` | Adds `stop_grace_period: 30s` to all 4 services |
 | `docker-compose.local.yml` | Adds `stop_grace_period: 30s` to all 4 application services |
 

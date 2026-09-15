@@ -15,7 +15,7 @@ export class ProductController {
 
   async getProduct(req: Request, res: Response) {
     try {
-      const id = parseInt(req.params.id, 10);
+      const id = parseInt(req.params.id as string, 10);
       const product = await this.productRepo.findById(id);
 
       if (!product) {
@@ -37,7 +37,7 @@ export class ProductController {
 
   async reserveProduct(req: Request, res: Response) {
     try {
-      const id = parseInt(req.params.id, 10);
+      const id = parseInt(req.params.id as string, 10);
       // @ts-ignore - req.user is set by auth middleware
       const userId = req.user.id;
 
